@@ -1,0 +1,112 @@
+/* Apply basic styles to the body and center the heading */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.main{
+    padding: 2%;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    /* align-items: center; */
+
+}
+h1 {
+    text-align: center;
+    margin-top: 2%;
+    margin-bottom: 2%;
+}
+
+
+
+
+/* Style each room type */
+.room-type {
+    display: flex;
+    background-color: #f2f2f2;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: rgba(0, 0, 0, 0.3) 0px 19px 38px, rgba(0, 0, 0, 0.22) 0px 15px 12px;
+    margin: 10px;
+    align-items: center;
+    justify-content: space-between;
+    width: 70%;
+}
+
+.room-type h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.room-type p {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.room-type a {
+    font-size: 18px;
+    text-decoration: none;
+    color: #007bff;
+}
+
+.rooms{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px; */
+}
+.details{
+    display: flex;
+    flex-direction: column;
+}
+
+.select{
+    background-color: #37eb91;
+    padding: 0.5%;
+    padding-left: 2%;
+    padding-right: 2%;
+    color: #f2f2f2;
+    text-decoration: none;
+    border-radius: 20px;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+}
+
+/* Apply responsive styles using media queries */
+@media screen and (max-width: 768px) {
+    .room-type {
+        padding: 10px;
+    }
+
+    .room-type h2 {
+        font-size: 20px;
+    }
+
+    .room-type p {
+        font-size: 16px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .main {
+        padding: 10px;
+    }
+
+    .room-type {
+        padding: 5px;
+    }
+
+    .room-type h2 {
+        font-size: 18px;
+    }
+
+    .room-type p {
+        font-size: 14px;
+    }
+
+    .room-type a {
+        font-size: 14px;
+    }
+}

@@ -1,0 +1,98 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap');
+
+
+.main{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+}
+
+
+
+*{
+    padding: 0%;
+    margin: 0%;
+    font-family: 'Roboto', sans-serif;
+ }
+
+ .dash-head{
+    display: flex;
+    color: gray;
+    width: 90%;
+    height: 10vh;
+    align-items: center;
+    /* background-color: aquamarine; */
+    justify-content: space-between;
+    padding-left: 5%;
+    padding-right: 10%;
+ }
+
+.dash{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.blocks {
+    display: flex;
+    justify-content: space-evenly;
+    width: 80%;
+    flex-direction: column;
+    /* background-color: aquamarine; */
+    height: 80vh;
+    padding: 2%;
+}
+
+.cols{
+    display: flex;
+    width: 100%;
+    justify-content: space-evenly;
+    height: 50%;
+}
+
+.cols a{
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    width: 23%;
+    height: 90%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+}
+.cols a:hover{
+    box-shadow: rgba(31, 130, 223, 0.473) 0px 5px 15px;
+}
+
+.link-btn{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    /* background-color: aqua; */
+    color: gray;
+}
+.link-btn h1{
+    width: min-content;
+    font-size: 2rem;
+}
+.signout, .account{
+    /* background-color: aquamarine; */
+    height: 70%;
+    width: 7vh;
+   
+}
+.signout-btn, .account-btn{
+    height: 100%;
+    width: 100%;
+}
+.signout-btn img, .account-btn img{
+    height: 100%;
+    width: 100%;
+}
+/* .bg{
+    background-color: aqua;
+} */
