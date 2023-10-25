@@ -8,8 +8,9 @@
     flex-direction: column;
     border: 1px solid black;
     /* padding: 2%; */
-    width: 60vh;
+    width: 80vh;
 }
+
 .capital{
     text-transform: capitalize;
 }
@@ -47,8 +48,15 @@
 .button button{
     border: none;
     border-radius: 12px;
-    background-color: rgb(116, 248, 123);
+    background-color: rgb(94, 245, 102);
     padding: 0.8%;
+    height: fit-content;
+    font-weight: 750;
+
+}
+#printButton:hover{
+    background-color:#09a50e;
+    color: aliceblue;
 }
 .dates{
     display: flex;
@@ -60,9 +68,59 @@
     padding-left: 2%;
     font-weight: bold;
 }
-table{
+.calculation table{
     width: 100%;
+    margin-top: 25;
 }
 .calculation{
     padding: 1%;
 }
+.upper-table{
+    /* border: 1px solid black; */
+}
+table,tr,th,td{
+    border: 1px solid transparent;
+    
+
+}
+th{
+    border: 1px solid gray;
+}
+
+.bold{
+    font-weight: bold;
+}
+.cal{
+    width: 100%;
+    display: flex;
+    margin-top: 5%;
+}
+.lower{
+    width: 50%;
+}
+
+.cal-table{
+    width: 100%;
+    /* border: 1px solid black; */
+}
+.cal-table td{
+    font-weight: bold;
+}
+.dis{
+    color: gray;
+}
+.tot{
+    margin-top: 3%;
+    background-color: rgb(156, 153, 153);
+}
+.bottom{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-top: 8%;
+    color: grey;
+    margin-bottom: 4%;
+}
+

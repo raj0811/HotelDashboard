@@ -89,6 +89,21 @@ const guestSchema = mongoose.Schema({
     roomId:{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Rooms'
+    },
+    businessName:{
+        type:String
+    },
+    guestGst:{
+        type:String
+    },
+    net:{
+        type:Number
+    },
+    advPaymentMode:{
+        type: String
+    },
+    paymentMode:{
+        type:Number
     }
    },
     {

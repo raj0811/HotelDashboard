@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 
-// mongoose.connect(process.env.DATABASE_URL)
-mongoose.connect('mongodb://localhost/hotel_db');
+// mongoose.connect('mongodb+srv://rpbarmaiya:mD9bbUM3HCKRjfxv@cluster0.5pzfsyi.mongodb.net/?retryWrites=true&w=majority')
+// mongoose.connect('mongodb://localhost/hotel_db');
+mongoose.connect(process.env.DATABASE_URL)
 
 
 

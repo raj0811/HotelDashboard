@@ -18,6 +18,7 @@
             <h1>CheckOut</h1>
             <div class="booking-id">
                 <p>Booking ID : <%=guest.bookingId%></p>
+                
             </div>
             <div class="checkout">
                 
@@ -32,24 +33,32 @@
                     
                     <div class="data-block">
                         <div class="date">
-                            <label for="cinTime">CheckIn</label>
-                            <input class="inpt" type="text" onchange="checkinTime()" id="cinTime" name="checkOutTime" placeholder="checkout Time">
+                            <label for="cinTime">CheckOut</label>
+                            <input class="inpt" type="time" onchange="checkinTime()" id="cinTime" name="checkOutTime" placeholder="checkout Time">
                         </div>
                         <div class="date">
                             <label for="checkOutDate">CheckOut Date</label>
-                            <input class="inpt" type="date" onchange="countDays(); calculateNet();" name="date" id="checkOutDate">
+                            <input class="inpt" type="date" onchange="countDays(); calculateNet()" name="date" id="checkOutDate">
                         </div>
                         <div class="date">
                             <label for="night">Total Nights</label>
-                            <input class="inpt" type="number" name="night" id="night">
+                            <input class="inpt" onchange="calculateNet(); getSubtotal(); getStay();" type="number" name="night" id="night">
                         </div>
                     </div>
                     
                     <div class="data-block">
-                        <input type="number" onchange="addServiceCharges(); calculateNet();"
-                            placeholder="Additonal Charges" id="charge">
-                        <input type="number" onchange="addDiscount(); calculateNet();" placeholder="Discount Ammt"
-                            id="discount">
+                        <div class="ipt">
+
+                            <label for="">Additional Charges</label>
+                            <input type="number"  onchange="addServiceCharges(); calculateNet();"
+                            placeholder="Additonal Charges" id="charge" value=0>
+                        </div>
+                        <div class="ipt">
+
+                            <label for="">Discount</label>
+                            <input type="number" onchange="addDiscount(); calculateNet();" placeholder="Discount Ammt"
+                            id="discount" value=0>
+                        </div>
 
                     </div>
                     
@@ -67,7 +76,7 @@
                             </tr>
                             <tr>
                                 <th>Room Rent</th>
-                                <td><input type="number" name="rent" id="baseprice" value=0 readonly></td>
+                                <td><input type="number" onchange="calculateNet()" name="rent" id="baseprice" value=0 readonly></td>
                             </tr>
                             <tr>
                                 <th>- Advance Payment</th>

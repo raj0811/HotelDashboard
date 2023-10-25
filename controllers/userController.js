@@ -75,7 +75,7 @@ module.exports.login=async function(req,res){
     
         // Generate JWT token
         const token = jwt.sign({ userId: user._id,user }, secretKey);
-    
+        
         // Set the token in a cookie
         res.cookie('token', token, { httpOnly: true });
     
@@ -186,7 +186,7 @@ module.exports.updateAccount=async(req,res)=>{
             }
           );
       
-          return res.redirect('back')
+          return res.redirect('/user/account')
         } catch (error) {
           res.status(500).json({ error: 'Error updating user data' });
         }

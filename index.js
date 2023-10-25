@@ -33,7 +33,11 @@ const MongoStore = require('connect-mongo');
 
 app.use(express.urlencoded({ extended: true }));
 
-
+// cloudinary.config({ 
+//     cloud_name: 'dw8rpoiil', 
+//     api_key: '143649366316163', 
+//     api_secret: 'GsZF65V_kqxrzhET0iYACVgTRJg' 
+//   });
 
   cloudinary.config({ 
     cloud_name: process.env.CLOUDINARY_NAME, 

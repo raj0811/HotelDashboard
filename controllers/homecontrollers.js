@@ -6,10 +6,12 @@ const RoomTypes = require('../models/roomType')
 const ExcelJS = require('exceljs');
 const User = require('../models/user')
 
+// Render Dashboard if Login
 module.exports.home = async function (req, res) {
   try{
     const userId=req.user.userId
     const user = await User.findById(userId)
+    console.log(req.user);
     return res.render('home', {
             title: "home",// Pass the user object to the template
             user
@@ -19,6 +21,7 @@ module.exports.home = async function (req, res) {
   }
 }
 
+// RENDER ADD GUEST Page
 module.exports.addGuest =async function (req, res) {
   try{
 
@@ -33,30 +36,40 @@ module.exports.addGuest =async function (req, res) {
       room
     })
   }catch(err){
-    res.send(err)
+    console.log(err);
+    return res.redirect('/error')
   }
 }
 
-
-
+// REnder Add Room Page
 module.exports.renderAddRoom = async (req, res) => {
-  try{
-
-    const userId = req.user.userId
-    const rooms = await Rooms.find({owner:userId})
-    const Category = await RoomTypes.find({ owner: userId })
-    // const rooms=await Rooms.find({})
+  try {
+    const userId = req.user.userId;
+    const page = req.query.page || 1; // Get the current page from the query string or default to 1.
+    const perPage = process.env.PAGE_COUNT; // Number of rooms per page.
+    
+    const rooms = await Rooms.find({ owner: userId })
+      .skip((page - 1) * perPage) // Skip the rooms on previous pages.
+      .limit(perPage) // Limit the number of rooms on the current page.
+      
+    const totalRooms = await Rooms.countDocuments({ owner: userId });
+    const totalPages = Math.ceil(totalRooms / perPage);
+    
+    const Category = await RoomTypes.find({ owner: userId });
     
     res.render('addrooms', {
       title: "Add",
       rooms,
-      Category
-    })
-  }catch(err){
-    res.send(err)
+      Category,
+      currentPage: page,
+      totalPages
+    });
+  } catch (err) {
+    res.send(err);
   }
-
 }
+
+// Render RoomDashboard - BookNow select room type
 module.exports.renderRoomDash = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -88,7 +101,7 @@ module.exports.renderRoomDash = async (req, res) => {
   }
 };
 
-
+// ADD Room Data To DB
 module.exports.addRoom = async (req, res) => {
   try {
     const userId = req.user.userId
@@ -129,6 +142,34 @@ module.exports.addRoom = async (req, res) => {
   }
 }
 
+module.exports.addRoomCat=async(req,res)=>{
+  try {
+    const userId = req.user.userId;
+    const {roomTypeId} = req.params
+    const page = req.query.page || 1; // Get the current page from the query string or default to 1.
+    const perPage = process.env.PAGE_COUNT; // Number of rooms per page.
+    
+    const rooms = await Rooms.find({ owner: userId })
+      .skip((page - 1) * perPage) // Skip the rooms on previous pages.
+      .limit(perPage) // Limit the number of rooms on the current page.
+      
+    const totalRooms = await Rooms.countDocuments({ owner: userId });
+    const totalPages = Math.ceil(totalRooms / perPage);
+    
+    const Category = await RoomTypes.findById(roomTypeId);
+    
+    res.render('addCatRoom', {
+      title: "Add",
+      rooms,
+      Category,
+      currentPage: page,
+      totalPages
+    });
+  } catch (err) {
+    res.send(err);
+  }
+}
+
 // Delete Room
 module.exports.deleteRoom= async(req,res)=>{
   try{
@@ -143,6 +184,7 @@ module.exports.deleteRoom= async(req,res)=>{
   }
 }
 
+// Render Select Room page - Select Room For GUEST
 module.exports.select = async (req, res) => {
   try{
 
@@ -162,9 +204,9 @@ module.exports.select = async (req, res) => {
   }
 }
 
-
+// Function To genrate RoomID
 function generateUniqueBookingId() {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let bookingId = '';
 
   // Generate a random ID
@@ -191,7 +233,7 @@ async function isBookingIdUnique(bookingId) {
   }
 }
 
-
+// PUSH GUEST DATA IN DB
 module.exports.addGuestData = async (req, res) => {
   
   try {
@@ -209,9 +251,12 @@ module.exports.addGuestData = async (req, res) => {
       advPayment,
       nationality,
       checkInTime,
+      businessName,
+      guestGst,
       roomNum,
+      advPaymentMode,
     } = req.body;
-    
+    console.log(checkInTime);
     let bookingId;
     let isUnique = false;
     
@@ -246,38 +291,126 @@ module.exports.addGuestData = async (req, res) => {
   }
 };
 
+
 module.exports.renderBookings = async (req, res) => {
   const userId = req.user.userId
   const bookings = await Guest.find()
 
 
   res.render('bookings', {
-    title: 'Bookings',
+    title: 'ALL Bookings',
     bookings
   })
 }
 
+// RECENT BOOKINGS - those who checkout
 module.exports.recentBookings=async(req,res)=>{
   const userId=req.user.userId
   const bookings = await Guest.find({ status: "leave",hotelId:userId })
   res.render('allbookings', {
-    title: 'Bookings',
+    title: 'Recent Bookings',
     bookings
   })
 
 }
 
+// Render Checking Bookings 
 module.exports.renderCheckInBookings = async (req, res) => {
   const userId = req.user.userId
   const bookings = await Guest.find({ status: "stay",hotelId:userId })
 
-
   res.render('bookings', {
-    title: 'Bookings',
+    title: 'Checking Bookings',
     bookings
   })
 }
 
+module.exports.proceedCheckout=async(req,res)=>{
+  try{
+    const {
+      dailyRent,
+      basePrice,
+      discount,
+      serviceCharge,
+      gst,
+      net,
+      night,
+      checkOutDate,
+      checkOutTime,
+      bookingId,
+      gstAmt,
+      paymentMode,
+    }=req.body
+
+    const { guestId } = req.params
+    
+    const hotelId = req.user.userId
+    console.log(hotelId);
+    const guest = await Guest.findById(guestId)
+    guest.checkOut = checkOutDate
+    guest.status = 'leave'
+    guest.checkOutTime = checkOutTime
+    await guest.save()
+    console.log(guest);
+    const room = await Rooms.findById(guest.roomId)
+    // console.log(room);
+    // Change Checkout Status
+ 
+    console.log('check');
+    const hotel = await User.findById(hotelId)
+    console.log(hotel);
+    // console.log('check');
+    // Update Room Status
+    room.occupied = false
+    room.guest = null
+    await room.save()
+    await guest.save()
+    
+    const invoice = new Invoice({ 
+      guestName: guest.guestName,
+      guestId: guestId,
+      roomNum: guest.roomNum,
+      roomId: room._id,
+      invoiceId: bookingId,
+      discount: discount,
+      serviceCharge: serviceCharge,
+      checkout: checkOutDate,
+      checlIn: guest.checkIn,
+      gst:gst,
+      net:net,
+      rent:basePrice,
+      dailyRent:dailyRent,
+      stay:night,
+      hotelId,
+      gstAmt,
+      paymentMode
+    })
+    console.log('saving....');
+    await invoice.save()
+    console.log('saved');
+    guest.invoiceId = invoice._id
+    guest.paymentMode = paymentMode
+    await guest.save()
+
+    return res.render('invoices', {
+      title: "Invoice",
+      guest,
+      invoice,
+      hotel,
+      room,
+    })
+
+
+  }catch(error){
+    res.send|(error)
+  }
+}
+
+
+
+
+
+// Checkout Logic and  Render Invoice
 module.exports.checkout = async (req, res) => {
   try{
 
@@ -296,6 +429,8 @@ module.exports.checkout = async (req, res) => {
       checkOutTime
     } = req.body
     
+
+    console.log(req.body);
     const guest = await Guest.findById(id)
 
     guest.checkOut = cout
@@ -305,20 +440,24 @@ module.exports.checkout = async (req, res) => {
     const hotel = await User.findById(hotelId)
     
     room.occupied = false
-    await room.save()
     room.guest = null
-  
+    await room.save()
+    
     // console.log(guest);
     
     
     
     const preNet = parseInt(net) + parseInt(adv)
     
-    const calGst= preNet * room.gst/100
-    const total = preNet + calGst
-    
-    
-    const invoice = new Invoice({
+    const subTotal = room.price * parseInt(stays)
+    console.log(subTotal);
+    const calGst= subTotal * room.gst/100
+    console.log(calGst);
+    const total = (subTotal + calGst + parseInt(service) )- parseInt(disc) 
+    console.log(total);
+
+
+    const invoice = new Invoice({ 
       guestName: guest.guestName,
       guestId: id,
       roomNum: guest.roomNum,
@@ -329,10 +468,11 @@ module.exports.checkout = async (req, res) => {
       discount: disc,
       serviceCharge: service,
       gst:calGst,
-      rent:room.price,
+      rent:subTotal,
       net:total,
       hotelId,
-      stay:stays
+      stay:stays,
+      subTotal
     })
     await invoice.save()
 
@@ -340,31 +480,28 @@ module.exports.checkout = async (req, res) => {
     await guest.save()
     // console.log(invoice);
     
-    return res.render('sample', {
+    return res.render('invoices', {
       title: "Invoice",
-      invoice,
-      rent,
-      preNet,
       guest,
+      invoice,
       hotel,
       room,
-      calGst,
-      total
     })
   }catch(err){
-    console.log(err);
+    // console.log(err);
     res.send(err)
   }
     
 }
 
+// Invoice Page for recent bookings
 module.exports.getInvoice=async(req,res)=>{
   try{
     const {guestId} = req.params
-    const userId = req.user.userId
-    const hotel = await User.findById(userId)
     const guest= await Guest.findById(guestId)
     const invoice = await Invoice.findById(guest.invoiceId)
+    const userId = invoice.hotelId
+    const hotel = await User.findById(userId)
     const room = await Rooms.findById(guest.roomId)
 
     return res.render('invoices',{
@@ -381,16 +518,17 @@ module.exports.getInvoice=async(req,res)=>{
   }
 }
 
+// RENDER CHECKOUT PAGE
 module.exports.checkoutPage = async (req, res) => {
   try{
 
     const { id } = req.params
     const guest = await Guest.findById(id)
-    console.log(guest);
-    const room = await Rooms.findById(guest.roomId)
-    console.log(room);
     
-    return res.render('checkout', {
+    const room = await Rooms.findById(guest.roomId)
+    
+    
+    return res.render('checkoutPage', {
       title: 'CheckOut',
       guest,
       room
@@ -401,76 +539,78 @@ module.exports.checkoutPage = async (req, res) => {
     
 }
 
+// REnder Report Pages
 module.exports.reportPage=async(req,res)=>{
   return res.render('reports',{
     title:'Reports'
   })
 }
 
-module.exports.getReport = async (req, res) => {
-  const userId = req.user.userId;
-  const { startDate, endDate } = req.body;
+// Send reports in excel files 
+// module.exports.getReport = async (req, res) => {
+//   const userId = req.user.userId;
+//   const { startDate, endDate } = req.body;
 
-  try {
-    // Fetch the invoices from your database based on the userId and date range
-    const invoices = await Invoice.find({
-      hotelId: userId,
+//   try {
+//     // Fetch the invoices from your database based on the userId and date range
+//     const invoices = await Invoice.find({
+//       hotelId: userId,
 
-      createdAt: { $gte: startDate, $lte: endDate }, // Assuming you have a createdAt field for timestamps
-    });
+//       createdAt: { $gte: startDate, $lte: endDate }, // Assuming you have a createdAt field for timestamps
+//     });
 
-    // Create a new Excel workbook and worksheet
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Invoices');
+//     // Create a new Excel workbook and worksheet
+//     const workbook = new ExcelJS.Workbook();
+//     const worksheet = workbook.addWorksheet('Invoices');
 
-    // Define the headers for the Excel file based on your schema
-    worksheet.columns = [
-      { header: 'Guest Name', key: 'guestName' },
-      { header: 'Room Number', key: 'roomNum' },
-      { header: 'Check-In', key: 'checkIn' },
-      { header: 'Check-Out', key: 'checkOut' },
-      { header: 'Advance', key: 'advance' },
-      { header: 'Discount', key: 'discount' },
-      { header: 'Service Charge', key: 'serviceCharge' },
-      { header: 'GST', key: 'gst' },
-      { header: 'Net Amount', key: 'net' },
-      // Add more headers as needed
-    ];
+//     // Define the headers for the Excel file based on your schema
+//     worksheet.columns = [
+//       { header: 'Guest Name', key: 'guestName' },
+//       { header: 'Room Number', key: 'roomNum' },
+//       { header: 'Check-In', key: 'checkIn' },
+//       { header: 'Check-Out', key: 'checkOut' },
+//       { header: 'Advance', key: 'advance' },
+//       { header: 'Discount', key: 'discount' },
+//       { header: 'Service Charge', key: 'serviceCharge' },
+//       { header: 'GST', key: 'gst' },
+//       { header: 'Net Amount', key: 'net' },
+//       // Add more headers as needed
+//     ];
 
-    // Add the invoice data to the worksheet
-    invoices.forEach((invoice) => {
-      worksheet.addRow({
-        guestName: invoice.guestName,
-        roomNum: invoice.roomNum,
-        checkIn: invoice.checkIn,
-        checkOut: invoice.checkOut,
-        advance: invoice.advance,
-        discount: invoice.discount,
-        serviceCharge: invoice.serviceCharge,
-        gst: invoice.gst,
-        net: invoice.net,
-        // Add more data columns as needed
-      });
-    });
+//     // Add the invoice data to the worksheet
+//     invoices.forEach((invoice) => {
+//       worksheet.addRow({
+//         guestName: invoice.guestName,
+//         roomNum: invoice.roomNum,
+//         checkIn: invoice.checkIn,
+//         checkOut: invoice.checkOut,
+//         advance: invoice.advance,
+//         discount: invoice.discount,
+//         serviceCharge: invoice.serviceCharge,
+//         gst: invoice.gst,
+//         net: invoice.net,
+//         // Add more data columns as needed
+//       });
+//     });
 
-    // Set the response headers to specify that you are sending an Excel file
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    );
-    res.setHeader(
-      'Content-Disposition',
-      'attachment; filename=invoice_report.xlsx'
-    );
+//     // Set the response headers to specify that you are sending an Excel file
+//     res.setHeader(
+//       'Content-Type',
+//       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+//     );
+//     res.setHeader(
+//       'Content-Disposition',
+//       'attachment; filename=invoice_report.xlsx'
+//     );
 
-    // Send the Excel file to the client
-    await workbook.xlsx.write(res);
-    res.end();
-  } catch (error) {
-    console.error('Error generating Excel report:', error);
-    return res.status(500).send('Internal Server Error');
-  }
-};
+//     // Send the Excel file to the client
+//     await workbook.xlsx.write(res);
+//     res.end();
+//   } catch (error) {
+//     console.error('Error generating Excel report:', error);
+//     return res.status(500).send('Internal Server Error');
+//   }
+// };
 
 
 
@@ -482,8 +622,8 @@ module.exports.sample=async(req,res)=>{
 
 
 
-
-module.exports.getReport2 = async (req, res) => {
+// Send reports in excel files 
+module.exports.getReport = async (req, res) => {
   const userId = req.user.userId;
   console.log(userId);
   const { startDate, endDate } = req.body;
@@ -516,6 +656,7 @@ module.exports.getReport2 = async (req, res) => {
       { header: 'Service Charge', key: 'serviceCharge' },
       { header: 'Net Amount', key: 'net' },
       { header: 'Address', key: 'address' },
+      { header: 'Payment Mode', key: 'paymentMode' },
       // Add more headers as needed
     ];
 
@@ -536,8 +677,9 @@ module.exports.getReport2 = async (req, res) => {
         discount: report.discount,
         serviceCharge: report.serviceCharge,
         gst: report.gst,
-        net: report.net,
-        address:report.address
+        net: report.net, // change net from invoice
+        address:report.address,
+        paymentMode:report.paymentMode
         // Add more data columns as needed
       });
     }
@@ -560,3 +702,74 @@ module.exports.getReport2 = async (req, res) => {
     return res.status(500).send('Internal Server Error');
   }
 };
+
+
+
+// 
+// const puppeteer = require('puppeteer');
+// var fs         = require('fs');
+
+
+
+
+// module.exports.print = async (req, res) => {
+//   try {
+//     const { invoiceId } = req.params;
+//     const browser = await puppeteer.launch();
+//     const page = await browser.newPage();
+
+//     // Load the HTML content from the URL
+//     await page.goto(`http://localhost:8007/get/invoices/${invoiceId}`);
+   
+
+    
+//     // Define the selector to capture
+//     const selector = '#invoice';
+//     await page.waitForSelector('#invoice');
+//     const elementHandle = await page.$(selector);
+
+//     // Load your CSS file
+//     const css = fs.readFileSync('./assets/css/bill.css', 'utf8');
+
+//     // Get the HTML content of the element
+//     const html = await page.evaluate(element => element.outerHTML, elementHandle);
+
+//     const { width, height } = await page.evaluate(element => {
+//       const rect = element.getBoundingClientRect();
+//       return { width: rect.width, height: rect.height };
+//     }, elementHandle);
+//     // Create a new page and set the CSS and HTML content
+//     const newPage = await browser.newPage();
+//     await newPage.setContent(`<style>${css}</style>${html}`);
+
+    
+//     // Generate the PDF
+//     const pdf = await newPage.pdf({
+//       // format: 'A4',
+//       preferCSSPageSize: true,
+//       printBackground: true,
+//       fullPage: true,
+//       width: '176mm',
+//       padding:{
+//           top: '0mm',
+//         bottom: '0mm',
+//         left: '0mm',
+//         right: '0mm'
+//       },
+//       margin: {
+//         top: '0mm',
+//         bottom: '0mm',
+//         left: '0mm',
+//         right: '0mm'
+//       }
+//   });
+
+//     await browser.close();
+
+//     res.set('Content-Type', 'application/pdf');
+//     res.send(pdf);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// };
