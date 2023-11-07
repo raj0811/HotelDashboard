@@ -11,11 +11,21 @@ module.exports.home = async function (req, res) {
   try{
     const userId=req.user.userId
     const user = await User.findById(userId)
-    console.log(req.user);
+    const totalRoom = await Rooms.countDocuments({owner:userId,})
+    const countAvailRoom = await Rooms.countDocuments({owner:userId,occupied:false})
+    const countOccupiedRoom = await Rooms.countDocuments({owner:userId,occupied:true})
+    const totalGuest = await Guest.countDocuments({hotelId:userId})
+    // console.log(totalRoom,countAvailRoom,countOccupiedRoom);
+   
     return res.render('home', {
             title: "home",// Pass the user object to the template
-            user
+            user,
+            totalRoom,
+            countAvailRoom,
+            countOccupiedRoom,
+            totalGuest
           });
+
   }catch(err){
     res.send(err)
   }
@@ -79,6 +89,8 @@ module.exports.renderRoomDash = async (req, res) => {
 
     // Create an array to store available room counts for each category
     const availableRoomCounts = [];
+    // const roomdata =[]
+    const roomdata = await Rooms.find({owner:userId})
 
     // Loop through each room category and count available rooms
     for (const category of roomCat) {
@@ -89,12 +101,14 @@ module.exports.renderRoomDash = async (req, res) => {
       });
 
       availableRoomCounts.push(availableRoomsCount);
+      
     }
-
+    console.log(roomdata);
     res.render('roomdash', {
       title: 'Rooms Dashboard',
       roomCat,
       availableRoomCounts,
+      roomdata
     });
   } catch (err) {
     res.send(err);
@@ -147,15 +161,17 @@ module.exports.addRoomCat=async(req,res)=>{
     const userId = req.user.userId;
     const {roomTypeId} = req.params
     const page = req.query.page || 1; // Get the current page from the query string or default to 1.
-    const perPage = process.env.PAGE_COUNT; // Number of rooms per page.
+    const perPage = 15; // Number of rooms per page.
     
     const rooms = await Rooms.find({ owner: userId })
-      .skip((page - 1) * perPage) // Skip the rooms on previous pages.
-      .limit(perPage) // Limit the number of rooms on the current page.
-      
+  .sort({ _id: -1 }) // Reverse order by _id (or another suitable field)
+  .skip((page - 1) * perPage) // Skip the rooms on previous pages.
+  .limit(perPage);
+  
+    console.log(rooms);
     const totalRooms = await Rooms.countDocuments({ owner: userId });
     const totalPages = Math.ceil(totalRooms / perPage);
-    
+    console.log(totalPages);
     const Category = await RoomTypes.findById(roomTypeId);
     
     res.render('addCatRoom', {
@@ -163,7 +179,8 @@ module.exports.addRoomCat=async(req,res)=>{
       rooms,
       Category,
       currentPage: page,
-      totalPages
+      totalPages,
+      roomTypeId
     });
   } catch (err) {
     res.send(err);
@@ -239,6 +256,7 @@ module.exports.addGuestData = async (req, res) => {
   try {
     const hotelId = req.user.userId
     // const {roomNum} = req.params
+    const {roomId} = req.params
     const {
       guestName,
       allGuests,
@@ -265,9 +283,9 @@ module.exports.addGuestData = async (req, res) => {
     bookingId = generateUniqueBookingId();
     isUnique = await isBookingIdUnique(bookingId);
   }
-
+  console.log(roomId);
     // Find the room by roomNum
-    const room = await Rooms.findOne({ roomNum });
+    const room = await Rooms.findById(roomId);
 
     if (!room) {
       // Handle the case where the room with the provided roomNum doesn't exist
@@ -294,6 +312,9 @@ module.exports.addGuestData = async (req, res) => {
 
 module.exports.renderBookings = async (req, res) => {
   const userId = req.user.userId
+  const page = req.query.page || 1; // Get the current page from the query string or default to 1.
+  const perPage = process.env.PAGE_COUNT; // Number of rooms per page.
+    
   const bookings = await Guest.find()
 
 
@@ -306,22 +327,107 @@ module.exports.renderBookings = async (req, res) => {
 // RECENT BOOKINGS - those who checkout
 module.exports.recentBookings=async(req,res)=>{
   const userId=req.user.userId
+  const page = req.query.page || 1; // Get the current page from the query string or default to 1.
+  const perPage = 15 // Number of rooms per page.
+  
   const bookings = await Guest.find({ status: "leave",hotelId:userId })
+  .skip((page - 1) * perPage) // Skip the rooms on previous pages.
+  .limit(perPage) // Limit the number of rooms on the current page.
+  
+  const totalBookings = await Guest.countDocuments({ status: "leave", hotelId: userId });
+  const totalPages = Math.ceil(totalBookings / perPage);
+  // console.log(totalPages);
   res.render('allbookings', {
     title: 'Recent Bookings',
-    bookings
+    bookings,
+    currentPage: page,
+    totalPages
   })
 
 }
 
+
+
+module.exports.recentBookingSearch = async (req, res) => {
+  try {
+    const { search } = req.body; // Use req.query to get the search parameter from the URL query string
+    const userId = req.user.userId;
+    const page = req.query.page || 1; // Get the current page from the query string or default to 1.
+    const perPage = 15; // Number of rooms per page.
+
+    // Create a filter object for the search
+    const filter = {
+      status: "leave",
+      hotelId: userId,
+      guestName: { $regex: search, $options: 'i' } // Case-insensitive search on guestName
+    };
+
+    const bookings = await Guest.find(filter)
+      .skip((page - 1) * perPage) // Skip the rooms on previous pages.
+      .limit(perPage); // Limit the number of rooms on the current page.
+    // console.log(bookings);
+    const totalBookings = await Guest.countDocuments(filter);
+    const totalPages = Math.ceil(totalBookings / perPage);
+    // console.log(totalPages);
+
+    res.render('allbookings', {
+      title: 'Recent Bookings',
+      bookings,
+      currentPage: page,
+      totalPages,
+    });
+  } catch (error) {
+    console.error(error);
+    // Handle the error and send an error response.
+    res.status(500).send('Internal Server Error');
+  }
+};
+
+
 // Render Checking Bookings 
 module.exports.renderCheckInBookings = async (req, res) => {
   const userId = req.user.userId
+  const page = req.query.page || 1; // Get the current page from the query string or default to 1.
+  const perPage = 15; // Number of rooms per page.
+
   const bookings = await Guest.find({ status: "stay",hotelId:userId })
+  .skip((page - 1) * perPage) // Skip the rooms on previous pages.
+  .limit(perPage);
+
+  const totalBookings = await Guest.countDocuments({ status: "stay", hotelId: userId });
+  const totalPages = Math.ceil(totalBookings / perPage);
 
   res.render('bookings', {
     title: 'Checking Bookings',
-    bookings
+    bookings,
+    currentPage: page,
+    totalPages
+  })
+}
+
+module.exports.renderCheckInBookingSearch = async (req, res) => {
+  const userId = req.user.userId
+  const { search } = req.body;
+  const page = req.query.page || 1; // Get the current page from the query string or default to 1.
+  const perPage = 15; // Number of rooms per page.
+
+  const filter = {
+    status: "stay",
+    hotelId: userId,
+    guestName: { $regex: search, $options: 'i' } // Case-insensitive search on guestName
+  };
+  const bookings = await Guest.find(filter)
+  .skip((page - 1) * perPage) // Skip the rooms on previous pages.
+  .limit(perPage);
+
+  const totalBookings = await Guest.countDocuments(filter);
+  const totalPages = Math.ceil(totalBookings / perPage);
+
+  res.render('bookings', {
+    title: 'Checking Bookings',
+    bookings,
+    currentPage: page,
+    totalPages
   })
 }
 
@@ -345,20 +451,20 @@ module.exports.proceedCheckout=async(req,res)=>{
     const { guestId } = req.params
     
     const hotelId = req.user.userId
-    console.log(hotelId);
+    // console.log(hotelId);
     const guest = await Guest.findById(guestId)
     guest.checkOut = checkOutDate
     guest.status = 'leave'
     guest.checkOutTime = checkOutTime
     await guest.save()
-    console.log(guest);
+    // console.log(guest);
     const room = await Rooms.findById(guest.roomId)
     // console.log(room);
     // Change Checkout Status
  
     console.log('check');
     const hotel = await User.findById(hotelId)
-    console.log(hotel);
+    // console.log(hotel);
     // console.log('check');
     // Update Room Status
     room.occupied = false
@@ -385,12 +491,15 @@ module.exports.proceedCheckout=async(req,res)=>{
       gstAmt,
       paymentMode
     })
+
+    
     console.log('saving....');
     await invoice.save()
     console.log('saved');
     guest.invoiceId = invoice._id
     guest.paymentMode = paymentMode
     await guest.save()
+    console.log('..check...');
 
     return res.render('invoices', {
       title: "Invoice",
@@ -402,7 +511,7 @@ module.exports.proceedCheckout=async(req,res)=>{
 
 
   }catch(error){
-    res.send|(error)
+    res.send(error)
   }
 }
 
@@ -498,11 +607,15 @@ module.exports.checkout = async (req, res) => {
 module.exports.getInvoice=async(req,res)=>{
   try{
     const {guestId} = req.params
+    
     const guest= await Guest.findById(guestId)
     const invoice = await Invoice.findById(guest.invoiceId)
+    // console.log(guest);
     const userId = invoice.hotelId
     const hotel = await User.findById(userId)
     const room = await Rooms.findById(guest.roomId)
+
+    console.log(invoice);
 
     return res.render('invoices',{
       title:'INVOICE',
@@ -523,6 +636,7 @@ module.exports.checkoutPage = async (req, res) => {
   try{
 
     const { id } = req.params
+    const userId = req.user.userId
     const guest = await Guest.findById(id)
     
     const room = await Rooms.findById(guest.roomId)
@@ -546,71 +660,7 @@ module.exports.reportPage=async(req,res)=>{
   })
 }
 
-// Send reports in excel files 
-// module.exports.getReport = async (req, res) => {
-//   const userId = req.user.userId;
-//   const { startDate, endDate } = req.body;
 
-//   try {
-//     // Fetch the invoices from your database based on the userId and date range
-//     const invoices = await Invoice.find({
-//       hotelId: userId,
-
-//       createdAt: { $gte: startDate, $lte: endDate }, // Assuming you have a createdAt field for timestamps
-//     });
-
-//     // Create a new Excel workbook and worksheet
-//     const workbook = new ExcelJS.Workbook();
-//     const worksheet = workbook.addWorksheet('Invoices');
-
-//     // Define the headers for the Excel file based on your schema
-//     worksheet.columns = [
-//       { header: 'Guest Name', key: 'guestName' },
-//       { header: 'Room Number', key: 'roomNum' },
-//       { header: 'Check-In', key: 'checkIn' },
-//       { header: 'Check-Out', key: 'checkOut' },
-//       { header: 'Advance', key: 'advance' },
-//       { header: 'Discount', key: 'discount' },
-//       { header: 'Service Charge', key: 'serviceCharge' },
-//       { header: 'GST', key: 'gst' },
-//       { header: 'Net Amount', key: 'net' },
-//       // Add more headers as needed
-//     ];
-
-//     // Add the invoice data to the worksheet
-//     invoices.forEach((invoice) => {
-//       worksheet.addRow({
-//         guestName: invoice.guestName,
-//         roomNum: invoice.roomNum,
-//         checkIn: invoice.checkIn,
-//         checkOut: invoice.checkOut,
-//         advance: invoice.advance,
-//         discount: invoice.discount,
-//         serviceCharge: invoice.serviceCharge,
-//         gst: invoice.gst,
-//         net: invoice.net,
-//         // Add more data columns as needed
-//       });
-//     });
-
-//     // Set the response headers to specify that you are sending an Excel file
-//     res.setHeader(
-//       'Content-Type',
-//       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-//     );
-//     res.setHeader(
-//       'Content-Disposition',
-//       'attachment; filename=invoice_report.xlsx'
-//     );
-
-//     // Send the Excel file to the client
-//     await workbook.xlsx.write(res);
-//     res.end();
-//   } catch (error) {
-//     console.error('Error generating Excel report:', error);
-//     return res.status(500).send('Internal Server Error');
-//   }
-// };
 
 
 
@@ -703,73 +753,86 @@ module.exports.getReport = async (req, res) => {
   }
 };
 
+module.exports.editbookings=async(req,res)=>{
+ const { guestId }=req.params
+ const guest = await Guest.findById(guestId)
+ console.log(guest);
+  return res.render('editbookings',{
+    title:'Edit Booking',
+    guest
+  })
+}
 
 
-// 
-// const puppeteer = require('puppeteer');
-// var fs         = require('fs');
+
+module.exports.updatebookings = async (req, res) => {
+  const { guestId } = req.params;
+  const {
+    guestName,
+    allGuests,
+    numberOfGuest,
+    adults,
+    children,
+    checkIn,
+    address,
+    phNumber,
+    advPayment,
+    nationality,
+    checkInTime,
+    businessName,
+    guestGst,
+    roomNum,
+    advPaymentMode,
+  } = req.body;
+
+  try {
+    const guest = await Guest.findById(guestId);
+    const oldRoom = guest.roomNum;
+
+    // If Room Number is Changed
+    if (oldRoom !== roomNum) {
+      const room = await Rooms.findOne({ roomNum });
+      const oldRoomObj = await Rooms.findOne({ roomNum: oldRoom });
+
+      // If new roomNum is already taken
+      if (room.occupied === true) {
+        req.flash('error', 'Room is Already Occupied');
+        return res.redirect('back');
+      }
+
+      room.occupied = true;
+      oldRoomObj.occupied = false;
+
+      await oldRoomObj.save();
+      await room.save();
+    }
+
+    // Update guest details here
+    guest.guestName = guestName;
+    guest.allGuests = allGuests;
+    guest.numberOfGuest = numberOfGuest;
+    guest.adults = adults;
+    guest.children = children;
+    guest.checkIn = checkIn;
+    guest.address = address;
+    guest.phNumber = phNumber;
+    guest.advPayment = advPayment;
+    guest.nationality = nationality;
+    guest.checkInTime = checkInTime;
+    guest.businessName = businessName;
+    guest.guestGst = guestGst;
+    guest.roomNum = roomNum;
+    guest.advPaymentMode = advPaymentMode;
+
+    await guest.save();
+    req.flash('success','Details Updated')
+    res.redirect('back')
+
+  } catch (error) {
+    console.error(error);
+    // Handle errors and respond appropriately
+    // You can consider sending an error response or redirecting to an error page
+  }
+};
 
 
-
-
-// module.exports.print = async (req, res) => {
-//   try {
-//     const { invoiceId } = req.params;
-//     const browser = await puppeteer.launch();
-//     const page = await browser.newPage();
-
-//     // Load the HTML content from the URL
-//     await page.goto(`http://localhost:8007/get/invoices/${invoiceId}`);
-   
-
-    
-//     // Define the selector to capture
-//     const selector = '#invoice';
-//     await page.waitForSelector('#invoice');
-//     const elementHandle = await page.$(selector);
-
-//     // Load your CSS file
-//     const css = fs.readFileSync('./assets/css/bill.css', 'utf8');
-
-//     // Get the HTML content of the element
-//     const html = await page.evaluate(element => element.outerHTML, elementHandle);
-
-//     const { width, height } = await page.evaluate(element => {
-//       const rect = element.getBoundingClientRect();
-//       return { width: rect.width, height: rect.height };
-//     }, elementHandle);
-//     // Create a new page and set the CSS and HTML content
-//     const newPage = await browser.newPage();
-//     await newPage.setContent(`<style>${css}</style>${html}`);
-
-    
-//     // Generate the PDF
-//     const pdf = await newPage.pdf({
-//       // format: 'A4',
-//       preferCSSPageSize: true,
-//       printBackground: true,
-//       fullPage: true,
-//       width: '176mm',
-//       padding:{
-//           top: '0mm',
-//         bottom: '0mm',
-//         left: '0mm',
-//         right: '0mm'
-//       },
-//       margin: {
-//         top: '0mm',
-//         bottom: '0mm',
-//         left: '0mm',
-//         right: '0mm'
-//       }
-//   });
-
-//     await browser.close();
-
-//     res.set('Content-Type', 'application/pdf');
-//     res.send(pdf);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).send('Internal Server Error');
-//   }
-// };

@@ -12,7 +12,13 @@
 h1 {
     text-align: center;
 }
-
+body::-webkit-scrollbar {
+    display: none;
+  }
+  
+  main::-webkit-scrollbar {
+    display: none;
+  }
 form {
     display: flex;
     flex-direction: column;
@@ -33,7 +39,7 @@ input[type="date"] {
 }
 
 button {
-    background-color: #007BFF;
+    background-color: #5F6FFF;
     color: white;
     border: none;
     border-radius: 5px;

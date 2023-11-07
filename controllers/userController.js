@@ -4,7 +4,9 @@ const cloudinary = require('cloudinary').v2;
 const secretKey ="mysecretKey"
 const bcrypt = require('bcrypt');
 const RoomTypes = require('../models/roomType')
+const Room= require('../models/rooms')
 const fs = require('fs');
+const Rooms = require('../models/rooms');
 
 module.exports.signup=async function(req,res){
     try {
@@ -13,7 +15,11 @@ module.exports.signup=async function(req,res){
         // Check if email or number is already taken
         const existingUser = await User.findOne({ $or: [{ email }, { number }] });
         if (existingUser) {
-          return res.status(400).json({ error: 'Email or number is already taken.' });
+          return res.render('errorPage',{
+            title:'error',
+            msg:'Email or number is already taken.'
+          })
+          // return res.status(400).json({ error: 'Email or number is already taken.' });
         }
     
         // Upload image to Cloudinary
@@ -64,7 +70,10 @@ module.exports.login=async function(req,res){
         const user = await User.findOne({ email });
     
         if (!user) {
-          return res.status(401).json({ error: 'Invalid credentials' });
+          return res.render('errorPage',{
+            title:'error',
+            msg:'Error Invalid Username and Password'
+          })
         }
     
         // Check if the password is correct (handled in the User schema)
@@ -78,6 +87,8 @@ module.exports.login=async function(req,res){
         
         // Set the token in a cookie
         res.cookie('token', token, { httpOnly: true });
+        res.locals.user = user;
+        // req.session.user = user;
     
        res.redirect('/');
       } catch (error) {
@@ -88,7 +99,9 @@ module.exports.login=async function(req,res){
 
 module.exports.addCategoryPage=async(req,res)=>{
   const userId = req.user.userId
+  const user = await User.findById(userId)
   const category = await RoomTypes.find({owner:userId})
+  
   return res.render('addcategory',{
     title:'Category',
     category
@@ -122,12 +135,29 @@ module.exports.signout = function (req, res) {
 };
 
 
-module.exports.deleteType = async(req,res)=>{
-  const {id} = req.params
-  const type = await RoomTypes.deleteOne({_id:id})
+module.exports.deleteType = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
 
-  return res.redirect('back')
-}
+    // Delete the room type
+    const type = await RoomTypes.deleteOne({ _id: id, owner: userId });
+
+    // Delete associated rooms
+    const room = await Rooms.deleteMany({ roomTypeId: id, owner: userId });
+
+    // Check if any documents were deleted
+    if (type.deletedCount === 0) {
+      return res.status(404).json({ message: 'Room type not found' });
+    }
+
+    // Redirect only if the deletions were successful
+    return res.redirect('back');
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
 
 module.exports.myAccount=async(req,res)=>{
   try{
@@ -191,3 +221,4 @@ module.exports.updateAccount=async(req,res)=>{
           res.status(500).json({ error: 'Error updating user data' });
         }
 }
+

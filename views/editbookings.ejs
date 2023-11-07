@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://kit.fontawesome.com/f324db610c.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://kit.fontawesome.com/f324db610c.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/addguest.css">
+
+</head>
+
+<body>
+    <div class="main">
+    <div class="main-section">
+        <div class="form">
+            <form action="/update/<%=guest._id%>" method="post">
+                <div>
+                    <label for="">Room Num</label>
+                    <input type="text" class="rnum" placeholder="Room" name="roomNum"  value="<%=guest.roomNum%>">
+                </div>
+                <div class="basic">
+                    <input type="text" placeholder="Name of guest" onchange="guestNames()" id="guest" name="guestName"
+                        required value="<%=guest.guestName%>">
+                    <input type="number" placeholder="Number" name="phNumber" value="<%=guest.phNumber%>" required>
+                </div>
+                <label for="allGuest">All Guest Name:</label>
+                <textarea name="allGuests" value="<%=guest.allGuests%>" class="all-guest" placeholder="All guests Names" id="allGuest" cols="30"
+                    rows="5"></textarea>
+                <div class="num-guest">
+                    <div class="type">
+                        <label for="">Childern</label>
+                        <input type="number" id="child" onchange="catchTotal()" placeholder="Childern" name="childern"
+                        value="<%=guest.childern%>" required>
+                        <label for="">Adults</label>
+                        <input type="number" id="adult" onchange="catchTotal()" placeholder="adults" name="adults"
+                        value="<%=guest.adults%>"  required>
+                        <label for="">Total</label>
+                        <input type="number" id="total" placeholder="Total" name="numberOfGuest" value="<%=guest.numberOfGuest%>" required>
+                    </div>
+                        
+                </div>
+                <div class="date">
+                    <label for="checkin">CheckIn:</label>
+                    <input type="date" id="checkin" name="checkIn" value="<%=guest.checkIn%>" required>
+                    <label for="timeInput">CheckIn Time:</label>
+                    <input type="time" id="timeInput" name="checkInTime" value="<%=guest.checkInTime%>">
+                </div>
+
+                <div class="address">
+                    <label for="">Address</label>
+                    <textarea name="address" class="address-bar" placeholder="address" cols="30" rows="5"
+                    required> <%=guest.address%> </textarea>
+                </div>
+
+                <div class="payment">
+                    <!-- <input type="text" placeholder="CheckIn Time" name="checkInTime" required> -->
+                    <label for="advPayment">Advance Payment</label>
+                    <input type="number" placeholder="Advance Payment" id="advPayment" name="advPayment" value="<%=guest.advPayment%>" value=0>
+                </div>
+                <div class="payment-mode">
+                    <label for="payment-select">Select Payment Mode:</label>
+                    <select id="payment-select" name="advPaymentMode">
+                        <option value="<%=guest.advPaymentMode%>">Cash</option>
+                        <option value="cash">Cash</option>
+                        <option value="upi">UPI</option>
+                        <option value="card">Card</option>
+                    </select>
+                </div>
+                <div class="business">
+                    <label for="">Business Name</label>
+                    <input type="text" value="<%=guest.businessName%>" name="businessName" placeholder="Business Name">
+                    <label for="">Business GST No.</label>
+                    <input type="text" value="<%=guest.guestGst%>" name="guestGst" placeholder="Guest GST">
+                </div>
+                <button type="submit">Update</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+    <script>
+        function catchTotal() {
+            const child = parseInt(document.getElementById('child').value)
+            const adult = parseInt(document.getElementById('adult').value)
+            const total = document.getElementById('total')
+            const setTotal = child + adult
+
+            total.value = setTotal
+
+        }
+
+        function guestNames() {
+            const guest = document.getElementById('guest').value;
+            const allGuest = document.getElementById('allGuest');
+
+            allGuest.textContent += guest + '\n';
+        }
+
+    </script>
+</body>
+
+</html>

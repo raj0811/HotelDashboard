@@ -3,8 +3,16 @@
 .main{
     display: flex;
     justify-content: center;
-    font-family: 'Poppins', sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
 }
+
+body::-webkit-scrollbar {
+    display: none;
+  }
+  
+  main::-webkit-scrollbar {
+    display: none;
+  }
 .form{
     /* background-color: aquamarine; */
     display: flex;
@@ -39,12 +47,13 @@
     width: 15%;
 }
 #btn{
-    background-color: #1af21a;
+    background-color:#5F6FFF;
     width: 8%;
     border: none;border-radius: 10px;
+    color: #f0f8ff;
 }
 #btn:hover{
-    background-color: #046c04;
+    background-color: #0056b3;
     color: aliceblue;
     font-weight: 900;
 }
@@ -157,7 +166,8 @@ th,td{
     text-align: center;
 }
 th{
-    background-color: rgb(61, 150, 252);
+    background-color: #5F6FFF;
+    color: #f0f8ff;
 }
 .pagination{
     display: flex;
@@ -175,8 +185,35 @@ th{
     display: flex;
     justify-content: center;
     align-items: center;
+    /* background-color: #5F6FFF; */
 }
 .pagination a{
     text-decoration: none;
-    color: blue;
+    /* background-color: #5F6FFF; */
+    color: #5F6FFF;
 }
+
+
+/* responsive style */
+@media (max-width: 480px){
+.rooms label, select, input {
+    width: 100%; 
+}}
+
+#btn {
+    width:100%; 
+}
+
+
+@media (min-width: 768px) {
+    .rooms label, select, input {
+        width: 50%; 
+    }
+
+    #btn {
+        width: 25%; 
+    }
+}
+
+
+
